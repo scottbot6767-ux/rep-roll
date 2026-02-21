@@ -868,7 +868,12 @@
 
     <!-- DICE -->
     <div class="panel">
-      <div class="panel-head">Roll</div>
+      <div class="panel-head">
+        Roll
+        <button class="btn btn-sm btn-ghost" id="admin-toggle-btn" onclick="toggleAdmin()" style="font-size:0.7rem">
+          Admin: OFF
+        </button>
+      </div>
       <div class="dice-panel">
         <div class="dice-wrap">
           <div class="die" id="die1">
@@ -880,7 +885,8 @@
             <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
           </div>
         </div>
-        <button class="roll-btn" id="roll-btn" onclick="rollDice()">ROLL THE DICE</button>
+        <button class="roll-btn" id="roll-btn" onclick="rollDice()" disabled>ROLL THE DICE</button>
+        <div id="roll-status" style="font-size:0.75rem;color:var(--text-dim);text-align:center;margin-top:-0.3rem">Enable admin to roll</div>
         <div class="roll-result" id="roll-result"></div>
       </div>
     </div>
@@ -963,6 +969,54 @@
     const REP_COLORS = ['#e74c3c','#3498db','#9b59b6','#e67e22','#1abc9c','#e91e63','#00bcd4','#ff9800','#8bc34a','#f06292','#ffb300','#26c6da'];
 
     let reps=[], bets=[], history=[], myRepId=null, giveTokenRepId=null, rolling=false;
+    let isAdmin = sessionStorage.getItem('rr-admin')==='true';
+
+    function toggleAdmin() {
+      if(isAdmin){
+        isAdmin=false;
+        sessionStorage.removeItem('rr-admin');
+        updateAdminUI();
+      } else {
+        const pin = prompt('Enter admin PIN (default: 0000):');
+        const stored = sessionStorage.getItem('rr-pin')||'0000';
+        if(pin===null) return;
+        if(pin===stored){
+          isAdmin=true;
+          sessionStorage.setItem('rr-admin','true');
+          updateAdminUI();
+        } else {
+          alert('Wrong PIN.');
+        }
+      }
+    }
+
+    function updateAdminUI() {
+      const btn=document.getElementById('admin-toggle-btn');
+      btn.textContent=`Admin: ${isAdmin?'ON':'OFF'}`;
+      btn.style.background=isAdmin?'var(--win)':'transparent';
+      btn.style.color=isAdmin?'#000':'var(--text-dim)';
+      btn.style.borderColor=isAdmin?'var(--win)':'#333';
+      updateRollBtn();
+    }
+
+    function updateRollBtn() {
+      const hasBets = bets.length > 0;
+      const rollBtn = document.getElementById('roll-btn');
+      const status = document.getElementById('roll-status');
+      if(!isAdmin){
+        rollBtn.disabled=true;
+        status.textContent='Enable admin to roll';
+        status.style.color='var(--text-dim)';
+      } else if(!hasBets){
+        rollBtn.disabled=true;
+        status.textContent='Waiting for bets...';
+        status.style.color='var(--text-dim)';
+      } else {
+        rollBtn.disabled=false;
+        status.textContent=`${bets.reduce((s,b)=>s+b.tokens,0)} token${bets.reduce((s,b)=>s+b.tokens,0)!==1?'s':''} on the table`;
+        status.style.color='var(--win)';
+      }
+    }
 
     // ==================== CONFETTI ====================
     const confCanvas = document.getElementById('confetti-canvas');
@@ -1105,7 +1159,7 @@
 
     // ==================== RENDER ====================
     function render() {
-      renderReps(); renderTable(); renderLeaderboard(); renderHistory(); renderMyRepBar();
+      renderReps(); renderTable(); renderLeaderboard(); renderHistory(); renderMyRepBar(); updateRollBtn();
     }
 
     function getFreeTokens(id) {
@@ -1285,14 +1339,63 @@
     // ==================== BETTING ====================
     function handleCellClick(num) {
       if(myRepId){
+        const existingBet = bets.find(b=>b.rep_id===myRepId&&b.number===num);
         const free=getFreeTokens(myRepId);
+
+        // Rep clicking a cell they already have tokens on — offer to remove/move
+        if(existingBet){
+          openMoveBetModal(myRepId, num, existingBet);
+          return;
+        }
+
+        // Rep has free tokens — place bet
         if(free>0){
           if(free===1) placeBet(myRepId,num,1);
           else openQuantityModal(myRepId,num,free);
           return;
         }
+
+        // No free tokens but has bets elsewhere — offer to move
+        const anyBet = bets.find(b=>b.rep_id===myRepId);
+        if(anyBet){
+          openMoveBetModal(myRepId, anyBet.number, anyBet, num);
+          return;
+        }
       }
       openBetModal(num);
+    }
+
+    function openMoveBetModal(repId, fromNum, bet, toNum=null) {
+      const rep=reps.find(r=>r.id===repId);
+      document.getElementById('bet-modal-num').textContent=fromNum;
+      document.getElementById('bet-modal-payout').textContent=`$${PAYOUTS[fromNum]}`;
+      const list=document.getElementById('rep-pick-list');
+      list.innerHTML=`
+        <div style="padding:0.4rem 0;font-size:0.88rem;color:var(--text-dim)">
+          <strong style="color:var(--text)">${rep.name}</strong> has ${bet.tokens} token${bet.tokens!==1?'s':''} on <strong style="color:var(--gold)">${fromNum}</strong>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem">
+          ${toNum ? `
+          <button class="btn" onclick="closeModal('bet-modal');moveBet(${repId},${fromNum},${toNum},${bet.tokens})">
+            Move all ${bet.tokens} token${bet.tokens!==1?'s':''} to ${toNum}
+          </button>` : ''}
+          <button class="btn btn-ghost" style="border-color:#c0392b;color:#e74c3c" onclick="closeModal('bet-modal');removeBet(${repId},${fromNum})">
+            Remove bet (return ${bet.tokens} token${bet.tokens!==1?'s':''})
+          </button>
+        </div>
+      `;
+      document.getElementById('bet-modal').classList.add('active');
+    }
+
+    async function removeBet(repId, num) {
+      const bet=bets.find(b=>b.rep_id===repId&&b.number===num);
+      if(bet) await db.from('rr_bets').delete().eq('id',bet.id);
+    }
+
+    async function moveBet(repId, fromNum, toNum, tokens) {
+      await removeBet(repId, fromNum);
+      // Small delay to let realtime update, then place
+      setTimeout(()=>placeBet(repId,toNum,tokens), 300);
     }
 
     function openQuantityModal(repId,num,maxTokens) {
@@ -1390,6 +1493,7 @@
     initTable();
     loadAll();
     subscribeRealtime();
+    updateAdminUI();
   </script>
 </body>
 </html>
