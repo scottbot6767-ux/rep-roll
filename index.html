@@ -1113,7 +1113,9 @@
     function processRoll(total) {
       const winners = [];
       const betsOnNumber = state.bets[total] || [];
+      const sevenOut = total === 7;
 
+      // Pay out bets on the rolled number
       betsOnNumber.forEach(bet => {
         const rep = state.reps.find(r => r.id === bet.repId);
         if (!rep) return;
@@ -1122,11 +1124,16 @@
         winners.push({ name: rep.name, number: total, payout });
       });
 
-      // Clear all bets after roll
-      state.bets = {};
+      if (sevenOut) {
+        // 7 clears the entire table — all remaining bets are lost
+        state.bets = {};
+      } else {
+        // Only remove bets on the winning number; all others stay
+        delete state.bets[total];
+      }
 
       // History
-      state.history.push({ roll: total, winners });
+      state.history.push({ roll: total, winners, sevenOut });
 
       // Keep history to 50
       if (state.history.length > 50) state.history.shift();
@@ -1136,7 +1143,15 @@
 
       // Show result
       const resultEl = document.getElementById('roll-result');
-      if (winners.length > 0) {
+      if (sevenOut) {
+        resultEl.innerHTML = `
+          <div class="total" style="color: var(--loss)">7</div>
+          <div class="winners-list" style="color: var(--loss)">
+            SEVEN OUT — table cleared
+            ${winners.length > 0 ? '<br>' + winners.map(w => `<span class="winner-name">${w.name}</span> wins <strong style="color:var(--win)">$${w.payout}</strong>`).join(' &bull; ') : ''}
+          </div>
+        `;
+      } else if (winners.length > 0) {
         const flash = document.getElementById('win-flash');
         flash.classList.add('show');
         setTimeout(() => flash.classList.remove('show'), 600);
@@ -1150,7 +1165,7 @@
       } else {
         resultEl.innerHTML = `
           <div class="total">${total}</div>
-          <div class="winners-list">No winners this roll</div>
+          <div class="winners-list">No winners — bets stay on the table</div>
         `;
       }
     }
