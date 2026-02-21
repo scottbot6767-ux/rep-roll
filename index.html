@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rep Roll — Sales Craps</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0f0f14;
@@ -21,7 +22,7 @@
       --win: #27ae60;
       --loss: #c0392b;
       --number-bg: #111118;
-      --token-size: 36px;
+      --token-size: 34px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,7 +34,6 @@
       min-height: 100vh;
     }
 
-    /* ---- HEADER ---- */
     header {
       background: var(--surface);
       border-bottom: 3px solid var(--gold);
@@ -80,25 +80,83 @@
       align-items: center;
     }
 
-    .payout-pill .num {
+    .payout-pill .num { color: var(--text-dim); }
+    .payout-pill .pay { color: var(--gold); }
+
+    /* MY REP BANNER */
+    .my-rep-bar {
+      background: var(--surface-2);
+      border-bottom: 2px solid #2a2a38;
+      padding: 0.7rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .my-rep-bar label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--text-dim);
+      white-space: nowrap;
     }
 
-    .payout-pill .pay {
-      color: var(--gold);
+    .my-rep-bar select {
+      background: var(--surface);
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 0.4rem 0.7rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      min-width: 160px;
     }
 
-    /* ---- LAYOUT ---- */
+    .my-rep-bar select:focus { outline: none; border-color: var(--gold); }
+
+    .rep-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .rep-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .free-tokens-badge {
+      background: var(--gold);
+      color: var(--bg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* CONNECTION */
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--win);
+      flex-shrink: 0;
+    }
+
+    .conn-dot.off { background: var(--red); }
+
     .app {
       display: grid;
-      grid-template-columns: 280px 1fr 280px;
-      gap: 1.5rem;
-      padding: 1.5rem;
+      grid-template-columns: 260px 1fr 260px;
+      gap: 1.2rem;
+      padding: 1.2rem;
       max-width: 1400px;
       margin: 0 auto;
     }
 
-    /* ---- PANELS ---- */
     .panel {
       background: var(--surface);
       border: 1px solid #2a2a38;
@@ -108,9 +166,9 @@
 
     .panel-head {
       background: var(--surface-2);
-      padding: 0.8rem 1.2rem;
+      padding: 0.7rem 1.1rem;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       letter-spacing: 0.1em;
       color: var(--gold);
       border-bottom: 1px solid #2a2a38;
@@ -119,54 +177,41 @@
       align-items: center;
     }
 
-    .panel-body {
-      padding: 1.2rem;
-    }
+    .panel-body { padding: 1rem; }
 
-    /* ---- TEAM PANEL ---- */
-    .add-rep {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
+    .add-rep { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
 
     .add-rep input {
       flex: 1;
       background: var(--surface-2);
       border: 1px solid #333;
       border-radius: 4px;
-      padding: 0.5rem 0.7rem;
+      padding: 0.45rem 0.6rem;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
-    .add-rep input:focus {
-      outline: none;
-      border-color: var(--gold);
-    }
+    .add-rep input:focus { outline: none; border-color: var(--gold); }
 
     .btn {
       background: var(--gold);
       border: none;
       border-radius: 4px;
-      padding: 0.5rem 0.9rem;
+      padding: 0.45rem 0.8rem;
       color: var(--bg);
       font-family: 'DM Sans', sans-serif;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       cursor: pointer;
       transition: background 0.15s;
       white-space: nowrap;
     }
 
-    .btn:hover { background: #e0b52e; }
+    .btn:hover:not(:disabled) { background: #e0b52e; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .btn-sm {
-      padding: 3px 8px;
-      font-size: 0.75rem;
-      border-radius: 3px;
-    }
+    .btn-sm { padding: 3px 7px; font-size: 0.72rem; border-radius: 3px; }
 
     .btn-ghost {
       background: transparent;
@@ -174,137 +219,82 @@
       color: var(--text-dim);
     }
 
-    .btn-ghost:hover {
-      background: var(--surface-2);
-      color: var(--text);
-    }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
 
-    .btn-red {
-      background: var(--red);
-      color: white;
-    }
+    .btn-red { background: var(--red); color: white; }
+    .btn-red:hover:not(:disabled) { background: #e74c3c; }
 
-    .btn-red:hover { background: #e74c3c; }
+    .btn-blue { background: #2980b9; color: white; }
+    .btn-blue:hover:not(:disabled) { background: #3498db; }
 
-    .rep-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+    .rep-list { display: flex; flex-direction: column; gap: 0.45rem; }
 
     .rep-card {
       background: var(--surface-2);
       border: 1px solid #2a2a38;
       border-radius: 6px;
-      padding: 0.7rem 0.9rem;
+      padding: 0.6rem 0.8rem;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
       transition: border-color 0.2s;
     }
 
-    .rep-card.has-tokens {
-      border-color: var(--gold);
-    }
+    .rep-card.has-tokens { border-color: var(--gold); }
+    .rep-card.is-me { border-color: #3498db; }
 
     .rep-avatar {
-      width: 32px;
-      height: 32px;
+      width: 28px; height: 28px;
       border-radius: 50%;
-      background: var(--gold);
-      color: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.75rem; color: #000;
       flex-shrink: 0;
     }
 
-    .rep-info {
-      flex: 1;
-      min-width: 0;
-    }
+    .rep-info { flex: 1; min-width: 0; }
 
     .rep-name {
-      font-weight: 700;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 700; font-size: 0.85rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    .rep-tokens {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-    }
+    .rep-meta { font-size: 0.7rem; color: var(--text-dim); }
+    .rep-meta .count { color: var(--gold); font-weight: 700; }
+    .rep-earn { font-size: 0.8rem; color: var(--win); font-weight: 700; }
 
-    .rep-tokens .count {
-      color: var(--gold);
-      font-weight: 700;
-    }
+    .rep-actions { display: flex; gap: 3px; }
 
-    .rep-earnings {
-      font-size: 0.8rem;
-      color: var(--win);
-      font-weight: 700;
-    }
-
-    .rep-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    /* ---- CRAPS TABLE ---- */
-    .table-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-    }
+    /* TABLE */
+    .table-wrap { display: flex; flex-direction: column; gap: 1rem; }
 
     .craps-table {
       background: var(--felt);
       border: 4px solid var(--felt-border);
       border-radius: 12px;
-      padding: 1.2rem;
+      padding: 1rem;
       box-shadow: inset 0 0 40px rgba(0,0,0,0.3), 0 0 0 2px var(--felt-line);
       user-select: none;
     }
 
     .table-section-label {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       letter-spacing: 0.15em;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.35);
       text-align: center;
       margin-bottom: 0.5rem;
     }
 
-    /* Number cells */
-    .number-row {
-      display: grid;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-
-    .number-row.main {
-      grid-template-columns: repeat(6, 1fr);
-    }
-
-    .number-row.outer {
-      grid-template-columns: repeat(4, 1fr);
-    }
-
-    .number-row.seven-row {
-      grid-template-columns: 1fr;
-      margin-bottom: 6px;
-    }
+    .number-row { display: grid; gap: 5px; margin-bottom: 5px; }
+    .number-row.main { grid-template-columns: repeat(6, 1fr); }
+    .number-row.outer { grid-template-columns: repeat(4, 1fr); }
+    .number-row.seven-row { grid-template-columns: 1fr; }
 
     .num-cell {
       background: var(--number-bg);
-      border: 2px solid rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.07);
       border-radius: 6px;
-      padding: 0.6rem 0.4rem;
+      padding: 0.5rem 0.3rem 0.3rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.15s;
@@ -314,397 +304,197 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      gap: 4px;
+      gap: 2px;
     }
 
-    .num-cell:hover {
-      border-color: var(--gold);
-      background: #1a1a22;
-    }
+    .num-cell:hover { border-color: var(--gold); background: #1a1a22; }
+    .num-cell.seven { min-height: 55px; background: #1a0a0a; border-color: #5a1a1a; }
+    .num-cell.seven:hover { border-color: var(--red); }
+    .num-cell.can-bet { border-color: #3498db; box-shadow: 0 0 8px rgba(52,152,219,0.3); }
+    .num-cell.can-bet:hover { border-color: var(--gold); }
 
-    .num-cell.hot {
-      border-color: var(--felt-line);
-    }
-
-    .num-cell.seven {
-      min-height: 60px;
-      background: #1a0a0a;
-      border-color: #5a1a1a;
-    }
-
-    .num-cell.seven:hover {
-      border-color: var(--red);
-    }
-
-    .num-label {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.6rem;
-      line-height: 1;
-      color: var(--text);
-    }
-
-    .num-cell.seven .num-label {
-      color: #e74c3c;
-    }
-
-    .num-payout {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-    }
-
-    .num-prob {
-      font-size: 0.6rem;
-      color: var(--text-dim);
-    }
+    .num-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; line-height: 1; }
+    .num-cell.seven .num-label { color: #e74c3c; }
+    .num-payout { font-size: 0.6rem; font-weight: 700; color: var(--gold); }
+    .num-prob { font-size: 0.58rem; color: var(--text-dim); }
 
     .tokens-on-cell {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2px;
-      justify-content: center;
-      margin-top: 2px;
+      display: flex; flex-wrap: wrap; gap: 2px;
+      justify-content: center; margin-top: 2px;
     }
 
     .token {
-      width: var(--token-size);
-      height: var(--token-size);
+      width: var(--token-size); height: var(--token-size);
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.55rem;
-      font-weight: 700;
-      color: #000;
-      text-transform: uppercase;
-      cursor: default;
+      border: 2px solid rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.5rem; font-weight: 700; color: #000;
     }
 
-    /* ---- DICE ---- */
+    /* DICE */
     .dice-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.2rem;
-      background: var(--surface);
-      border-radius: 8px;
-      border: 1px solid #2a2a38;
+      display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+      padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid #2a2a38;
     }
 
-    .dice-wrap {
-      display: flex;
-      gap: 1.5rem;
-    }
+    .dice-wrap { display: flex; gap: 1.2rem; }
 
     .die {
-      width: 72px;
-      height: 72px;
-      background: var(--text);
-      border-radius: 12px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      padding: 8px;
-      gap: 4px;
+      width: 64px; height: 64px;
+      background: var(--text); border-radius: 10px;
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+      padding: 7px; gap: 3px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
-      transition: transform 0.1s;
     }
 
-    .die.rolling {
-      animation: diceRoll 0.6s ease-out;
-    }
+    .die.rolling { animation: diceRoll 0.6s ease-out; }
 
     @keyframes diceRoll {
       0% { transform: rotate(0deg) scale(1); }
-      20% { transform: rotate(90deg) scale(1.1); }
-      40% { transform: rotate(180deg) scale(0.9); }
-      60% { transform: rotate(270deg) scale(1.1); }
-      80% { transform: rotate(320deg) scale(0.95); }
+      25% { transform: rotate(90deg) scale(1.1); }
+      50% { transform: rotate(200deg) scale(0.9); }
+      75% { transform: rotate(300deg) scale(1.05); }
       100% { transform: rotate(360deg) scale(1); }
     }
 
-    .dot {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: #1a1a1a;
-    }
-
+    .dot { width: 100%; height: 100%; border-radius: 50%; background: #1a1a1a; }
     .dot.hidden { background: transparent; }
 
-    /* Die dot patterns */
-    .die[data-value="1"] .dot:nth-child(1) { grid-area: 2/2; }
-    .die[data-value="2"] .dot:nth-child(1) { grid-area: 1/3; }
-    .die[data-value="2"] .dot:nth-child(2) { grid-area: 3/1; }
-    .die[data-value="3"] .dot:nth-child(1) { grid-area: 1/3; }
-    .die[data-value="3"] .dot:nth-child(2) { grid-area: 2/2; }
-    .die[data-value="3"] .dot:nth-child(3) { grid-area: 3/1; }
-    .die[data-value="4"] .dot:nth-child(1) { grid-area: 1/1; }
-    .die[data-value="4"] .dot:nth-child(2) { grid-area: 1/3; }
-    .die[data-value="4"] .dot:nth-child(3) { grid-area: 3/1; }
-    .die[data-value="4"] .dot:nth-child(4) { grid-area: 3/3; }
-    .die[data-value="5"] .dot:nth-child(1) { grid-area: 1/1; }
-    .die[data-value="5"] .dot:nth-child(2) { grid-area: 1/3; }
-    .die[data-value="5"] .dot:nth-child(3) { grid-area: 2/2; }
-    .die[data-value="5"] .dot:nth-child(4) { grid-area: 3/1; }
-    .die[data-value="5"] .dot:nth-child(5) { grid-area: 3/3; }
-    .die[data-value="6"] .dot:nth-child(1) { grid-area: 1/1; }
-    .die[data-value="6"] .dot:nth-child(2) { grid-area: 2/1; }
-    .die[data-value="6"] .dot:nth-child(3) { grid-area: 3/1; }
-    .die[data-value="6"] .dot:nth-child(4) { grid-area: 1/3; }
-    .die[data-value="6"] .dot:nth-child(5) { grid-area: 2/3; }
-    .die[data-value="6"] .dot:nth-child(6) { grid-area: 3/3; }
-
     .roll-btn {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.4rem;
-      letter-spacing: 0.15em;
-      background: var(--gold);
-      border: none;
-      border-radius: 6px;
-      padding: 0.7rem 2.5rem;
-      color: var(--bg);
-      cursor: pointer;
-      transition: all 0.15s;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.15em;
+      background: var(--gold); border: none; border-radius: 6px;
+      padding: 0.6rem 2rem; color: var(--bg); cursor: pointer; transition: all 0.15s;
     }
 
-    .roll-btn:hover:not(:disabled) {
-      background: #e0b52e;
-      transform: translateY(-2px);
-    }
+    .roll-btn:hover:not(:disabled) { background: #e0b52e; transform: translateY(-2px); }
+    .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .roll-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .roll-result {
-      text-align: center;
-      font-family: 'Bebas Neue', sans-serif;
-    }
+    .roll-result { text-align: center; }
 
     .roll-result .total {
-      font-size: 3rem;
-      line-height: 1;
-      color: var(--gold);
+      font-family: 'Bebas Neue', sans-serif; font-size: 3rem; line-height: 1; color: var(--gold);
     }
 
-    .roll-result .winners-list {
-      font-size: 0.85rem;
-      font-family: 'DM Sans', sans-serif;
-      color: var(--text-dim);
-      margin-top: 0.3rem;
-    }
+    .roll-result .sub { font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem; }
+    .roll-result .winner-name { color: var(--win); font-weight: 700; }
 
-    .roll-result .winner-name {
-      color: var(--win);
-      font-weight: 700;
-    }
-
-    /* ---- LEADERBOARD / HISTORY ---- */
-    .leaderboard {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+    /* RIGHT PANEL */
+    .leaderboard { display: flex; flex-direction: column; gap: 0.4rem; }
 
     .lb-row {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 0.8rem;
-      background: var(--surface-2);
-      border-radius: 6px;
-      border: 1px solid #2a2a38;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.7rem; background: var(--surface-2);
+      border-radius: 6px; border: 1px solid #2a2a38;
     }
 
-    .lb-rank {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.2rem;
-      color: var(--text-dim);
-      width: 24px;
-      text-align: center;
-    }
-
+    .lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--text-dim); width: 22px; text-align: center; }
     .lb-rank.gold { color: #f4c542; }
     .lb-rank.silver { color: #c0c0c0; }
     .lb-rank.bronze { color: #cd7f32; }
-
-    .lb-name {
-      flex: 1;
-      font-weight: 700;
-      font-size: 0.9rem;
-    }
-
-    .lb-earn {
-      font-weight: 700;
-      color: var(--win);
-      font-size: 0.9rem;
-    }
+    .lb-name { flex: 1; font-weight: 700; font-size: 0.85rem; }
+    .lb-earn { font-weight: 700; color: var(--win); font-size: 0.85rem; }
 
     .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      max-height: 260px;
-      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0.35rem;
+      max-height: 240px; overflow-y: auto;
     }
 
-    .history-list::-webkit-scrollbar { width: 4px; }
-    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar { width: 3px; }
     .history-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
     .history-entry {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.4rem 0.7rem;
-      background: var(--surface-2);
-      border-radius: 4px;
-      font-size: 0.8rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.6rem; background: var(--surface-2); border-radius: 4px; font-size: 0.75rem;
     }
 
-    .history-roll {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.1rem;
-      color: var(--gold);
-      width: 24px;
-      text-align: center;
-    }
+    .history-roll { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--gold); width: 22px; text-align: center; }
+    .history-detail { flex: 1; color: var(--text-dim); }
+    .history-payout { color: var(--win); font-weight: 700; }
+    .history-payout.none { color: var(--text-dim); }
 
-    .history-detail {
-      flex: 1;
-      color: var(--text-dim);
-    }
-
-    .history-payout {
-      color: var(--win);
-      font-weight: 700;
-    }
-
-    .history-payout.none {
-      color: var(--text-dim);
-    }
-
-    /* ---- MODAL ---- */
+    /* MODAL */
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      display: none; align-items: center; justify-content: center; z-index: 100;
     }
 
     .modal-overlay.active { display: flex; }
 
     .modal {
-      background: var(--surface);
-      border: 2px solid var(--gold);
-      border-radius: 10px;
-      padding: 1.8rem;
-      max-width: 400px;
-      width: 90%;
+      background: var(--surface); border: 2px solid var(--gold); border-radius: 10px;
+      padding: 1.6rem; max-width: 380px; width: 90%;
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
 
     .modal h3 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.6rem;
-      color: var(--gold);
-      letter-spacing: 0.08em;
-      margin-bottom: 1.2rem;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--gold);
+      letter-spacing: 0.08em; margin-bottom: 1rem;
     }
 
-    .modal-rep-name {
-      font-size: 1rem;
-      color: var(--text-dim);
-      margin-bottom: 1.2rem;
-    }
+    .modal-sub { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; }
+    .modal-sub strong { color: var(--text); }
 
-    .modal-rep-name strong { color: var(--text); }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
+    .form-group { margin-bottom: 0.9rem; }
 
     .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-dim);
-      margin-bottom: 0.4rem;
+      display: block; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 0.35rem;
     }
 
     .form-group input, .form-group select {
-      width: 100%;
-      background: var(--surface-2);
-      border: 1px solid #333;
-      border-radius: 4px;
-      padding: 0.6rem 0.8rem;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
+      width: 100%; background: var(--surface-2); border: 1px solid #333; border-radius: 4px;
+      padding: 0.55rem 0.7rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
     }
 
-    .form-group input:focus, .form-group select:focus {
-      outline: none;
-      border-color: var(--gold);
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); }
+
+    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1.2rem; }
+    .modal-actions .btn { flex: 1; padding: 0.65rem; font-size: 0.9rem; }
+
+    /* bet rep picker */
+    .rep-pick-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 220px; overflow-y: auto; }
+
+    .rep-pick-item {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 0.8rem; background: var(--surface-2); border: 1px solid #333;
+      border-radius: 6px; cursor: pointer; transition: border-color 0.15s;
     }
 
-    .modal-actions {
-      display: flex;
-      gap: 0.6rem;
-      margin-top: 1.4rem;
-    }
+    .rep-pick-item:hover { border-color: var(--gold); }
 
-    .modal-actions .btn { flex: 1; padding: 0.7rem; }
+    .rep-pick-item .pick-free { margin-left: auto; font-size: 0.75rem; color: var(--gold); font-weight: 700; }
 
-    /* ---- BET PLACEMENT ---- */
-    .bet-mode-banner {
-      display: none;
-      background: var(--gold);
-      color: var(--bg);
-      padding: 0.7rem 1.2rem;
-      font-weight: 700;
-      font-size: 0.9rem;
-      border-radius: 6px;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .bet-mode-banner.active { display: flex; }
-
-    /* ---- WIN FLASH ---- */
+    /* WIN FLASH */
     .win-flash {
-      position: fixed;
-      inset: 0;
-      background: rgba(39, 174, 96, 0.15);
-      pointer-events: none;
-      z-index: 200;
-      opacity: 0;
-      transition: opacity 0.3s;
+      position: fixed; inset: 0; background: rgba(39,174,96,0.12);
+      pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.3s;
     }
 
     .win-flash.show { opacity: 1; }
 
-    /* ---- RESPONSIVE ---- */
-    @media (max-width: 1100px) {
-      .app {
-        grid-template-columns: 1fr 1fr;
-      }
+    /* LOADING */
+    .loading-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center; z-index: 300;
+    }
+
+    .loading-screen.hidden { display: none; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #333; border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1050px) {
+      .app { grid-template-columns: 1fr 1fr; }
       .table-wrap { grid-column: 1 / -1; }
     }
 
-    @media (max-width: 700px) {
-      .app { grid-template-columns: 1fr; padding: 1rem; }
+    @media (max-width: 650px) {
+      .app { grid-template-columns: 1fr; padding: 0.8rem; }
       .payout-legend { display: none; }
     }
   </style>
@@ -712,35 +502,62 @@
 <body>
   <div class="win-flash" id="win-flash"></div>
 
+  <div class="loading-screen" id="loading-screen">
+    <div style="text-align:center">
+      <div class="spinner"></div>
+      <div style="margin-top:1rem; font-family:'Bebas Neue',sans-serif; color:var(--gold); letter-spacing:0.1em;">Loading Kingdom...</div>
+    </div>
+  </div>
+
   <header>
     <div class="logo">
       REP ROLL
       <span>Sales Incentive Craps</span>
     </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--text-dim)">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-label">Connecting...</span>
+      </div>
+    </div>
     <div class="payout-legend">
       <div class="payout-pill"><span class="num">7</span><span class="pay">$3</span></div>
-      <div class="payout-pill"><span class="num">6 / 8</span><span class="pay">$5</span></div>
-      <div class="payout-pill"><span class="num">5 / 9</span><span class="pay">$10</span></div>
-      <div class="payout-pill"><span class="num">4 / 10</span><span class="pay">$15</span></div>
-      <div class="payout-pill"><span class="num">3 / 11</span><span class="pay">$25</span></div>
-      <div class="payout-pill"><span class="num">2 / 12</span><span class="pay">$75</span></div>
+      <div class="payout-pill"><span class="num">6/8</span><span class="pay">$5</span></div>
+      <div class="payout-pill"><span class="num">5/9</span><span class="pay">$10</span></div>
+      <div class="payout-pill"><span class="num">4/10</span><span class="pay">$15</span></div>
+      <div class="payout-pill"><span class="num">3/11</span><span class="pay">$25</span></div>
+      <div class="payout-pill"><span class="num">2/12</span><span class="pay">$75</span></div>
     </div>
   </header>
 
+  <!-- MY REP SELECTOR -->
+  <div class="my-rep-bar">
+    <label>You are:</label>
+    <select id="my-rep-select" onchange="onMyRepChange()">
+      <option value="">-- Select your rep --</option>
+    </select>
+    <div class="rep-indicator" id="my-rep-indicator" style="display:none">
+      <div class="rep-dot" id="my-rep-dot"></div>
+      <span id="my-rep-free"></span>
+      <span class="free-tokens-badge" id="my-rep-badge"></span>
+    </div>
+    <div style="margin-left:auto;font-size:0.75rem;color:var(--text-dim)">
+      Click a number on the table to place your bet
+    </div>
+  </div>
+
   <div class="app">
 
-    <!-- LEFT: TEAM -->
+    <!-- LEFT: TEAM ADMIN -->
     <div>
       <div class="panel">
         <div class="panel-head">
           Team
-          <button class="btn btn-sm" onclick="openAddRepModal()">+ Add Rep</button>
+          <button class="btn btn-sm" onclick="openAddRepModal()">+ Rep</button>
         </div>
         <div class="panel-body">
           <div class="rep-list" id="rep-list">
-            <div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 1rem;">
-              No reps yet. Add your team above.
-            </div>
+            <div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem">Loading...</div>
           </div>
         </div>
       </div>
@@ -748,36 +565,17 @@
 
     <!-- CENTER: TABLE + DICE -->
     <div class="table-wrap">
-
-      <div class="bet-mode-banner" id="bet-banner">
-        <span id="bet-banner-text">Select a number to place your bet</span>
-        <button class="btn btn-sm btn-ghost" onclick="cancelBet()">Cancel</button>
-      </div>
-
       <div class="craps-table">
-        <div class="table-section-label">PLACE YOUR BETS</div>
-
-        <!-- Outer numbers: 2, 3, 11, 12 -->
+        <div class="table-section-label">PLACE YOUR BETS — BETS STAY UNTIL 7</div>
         <div class="number-row outer" id="outer-row"></div>
-
-        <!-- Main numbers: 4, 5, 6, 8, 9, 10 -->
         <div class="number-row main" id="main-row"></div>
-
-        <!-- 7 -->
         <div class="number-row seven-row" id="seven-row"></div>
       </div>
 
-      <!-- DICE -->
       <div class="dice-area">
         <div class="dice-wrap">
-          <div class="die" id="die1" data-value="1">
-            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
-            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
-          </div>
-          <div class="die" id="die2" data-value="1">
-            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
-            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
-          </div>
+          <div class="die" id="die1"><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div></div>
+          <div class="die" id="die2"><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div></div>
         </div>
         <button class="roll-btn" id="roll-btn" onclick="rollDice()">ROLL THE DICE</button>
         <div class="roll-result" id="roll-result"></div>
@@ -785,28 +583,24 @@
     </div>
 
     <!-- RIGHT: LEADERBOARD + HISTORY -->
-    <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+    <div style="display:flex;flex-direction:column;gap:1rem;">
       <div class="panel">
         <div class="panel-head">
           Leaderboard
-          <button class="btn btn-sm btn-ghost btn-red" onclick="resetAll()" style="font-size:0.7rem;">Reset</button>
+          <button class="btn btn-sm btn-ghost btn-red" onclick="resetAll()">Reset</button>
         </div>
         <div class="panel-body">
           <div class="leaderboard" id="leaderboard">
-            <div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 0.5rem;">
-              No earnings yet.
-            </div>
+            <div style="color:var(--text-dim);font-size:0.82rem;text-align:center">No earnings yet.</div>
           </div>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-head">Roll History</div>
-        <div class="panel-body" style="padding: 0.8rem;">
+        <div class="panel-body" style="padding:0.7rem">
           <div class="history-list" id="history-list">
-            <div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 0.5rem;">
-              No rolls yet.
-            </div>
+            <div style="color:var(--text-dim);font-size:0.78rem;text-align:center">No rolls yet.</div>
           </div>
         </div>
       </div>
@@ -833,10 +627,10 @@
   <div class="modal-overlay" id="give-token-modal">
     <div class="modal">
       <h3>Award Token</h3>
-      <div class="modal-rep-name" id="give-token-rep-label">Rep: <strong></strong></div>
+      <div class="modal-sub" id="give-token-label">Awarding to <strong></strong></div>
       <div class="form-group">
         <label>Reason (optional)</label>
-        <input type="text" id="token-reason" placeholder="Closed Q4 deal" maxlength="40">
+        <input type="text" id="token-reason" placeholder="Closed the Acme deal" maxlength="50">
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal('give-token-modal')">Cancel</button>
@@ -845,80 +639,48 @@
     </div>
   </div>
 
+  <!-- BET MODAL -->
+  <div class="modal-overlay" id="bet-modal">
+    <div class="modal">
+      <h3>Bet on <span id="bet-modal-num"></span></h3>
+      <div class="modal-sub">Payout: <strong id="bet-modal-payout"></strong> per token</div>
+      <div class="rep-pick-list" id="rep-pick-list"></div>
+      <div class="modal-actions" style="margin-top:0.8rem">
+        <button class="btn btn-ghost" onclick="closeModal('bet-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // =====================
-    // GAME CONFIG
-    // =====================
-    const PAYOUTS = {
-      2: 75, 3: 25, 4: 15, 5: 10,
-      6: 5, 7: 3, 8: 5, 9: 10,
-      10: 15, 11: 25, 12: 75
-    };
+    const SUPABASE_URL = 'https://khgxuruuedphulsimrzn.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoZ3h1cnV1ZWRwaHVsc2ltcnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyOTY3MDgsImV4cCI6MjA4Njg3MjcwOH0.TgagNeF4dKzZX_B1jsKsPb9007JwXouhcBVEoWmAuPc';
 
-    const PROBS = {
-      2: '2.8%', 3: '5.6%', 4: '8.3%', 5: '11.1%',
-      6: '13.9%', 7: '16.7%', 8: '13.9%', 9: '11.1%',
-      10: '8.3%', 11: '5.6%', 12: '2.8%'
-    };
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const REP_COLORS = [
-      '#e74c3c','#3498db','#9b59b6','#e67e22',
-      '#1abc9c','#e91e63','#00bcd4','#ff9800',
-      '#8bc34a','#f06292','#26c6da','#ffb300'
-    ];
+    const PAYOUTS = { 2:75, 3:25, 4:15, 5:10, 6:5, 7:3, 8:5, 9:10, 10:15, 11:25, 12:75 };
+    const PROBS   = { 2:'2.8%', 3:'5.6%', 4:'8.3%', 5:'11.1%', 6:'13.9%', 7:'16.7%', 8:'13.9%', 9:'11.1%', 10:'8.3%', 11:'5.6%', 12:'2.8%' };
+    const REP_COLORS = ['#e74c3c','#3498db','#9b59b6','#e67e22','#1abc9c','#e91e63','#00bcd4','#ff9800','#8bc34a','#f06292','#ffb300','#26c6da'];
 
-    // =====================
-    // STATE
-    // =====================
-    let state = {
-      reps: [],       // { id, name, tokens, earnings, color }
-      bets: {},       // { number: [{ repId, tokens }] }
-      history: [],    // { roll, winners: [{ name, number, payout }] }
-      nextRepId: 1
-    };
-
-    let betMode = null; // { repId, tokens }
+    let reps = [];
+    let bets = [];
+    let history = [];
+    let myRepId = null;
+    let betTargetNum = null;
     let giveTokenRepId = null;
-
-    // =====================
-    // PERSISTENCE
-    // =====================
-    function save() {
-      localStorage.setItem('rep-roll', JSON.stringify(state));
-    }
-
-    function load() {
-      const saved = localStorage.getItem('rep-roll');
-      if (saved) {
-        try { state = JSON.parse(saved); } catch(e) {}
-      }
-    }
+    let rolling = false;
 
     // =====================
     // INIT TABLE
     // =====================
     function initTable() {
-      const outerRow = document.getElementById('outer-row');
-      const mainRow = document.getElementById('main-row');
-      const sevenRow = document.getElementById('seven-row');
-
-      // Outer: 2, 3, 11, 12
-      [2, 3, 11, 12].forEach(n => {
-        outerRow.appendChild(makeCell(n));
-      });
-
-      // Main: 4, 5, 6, 8, 9, 10
-      [4, 5, 6, 8, 9, 10].forEach(n => {
-        mainRow.appendChild(makeCell(n));
-      });
-
-      // Seven
-      sevenRow.appendChild(makeCell(7, true));
+      [2,3,11,12].forEach(n => document.getElementById('outer-row').appendChild(makeCell(n)));
+      [4,5,6,8,9,10].forEach(n => document.getElementById('main-row').appendChild(makeCell(n)));
+      document.getElementById('seven-row').appendChild(makeCell(7, true));
     }
 
-    function makeCell(n, isSeven = false) {
+    function makeCell(n, isSeven=false) {
       const cell = document.createElement('div');
-      cell.className = `num-cell${isSeven ? ' seven' : ''}`;
+      cell.className = `num-cell${isSeven?' seven':''}`;
       cell.id = `cell-${n}`;
       cell.innerHTML = `
         <div class="num-label">${n}</div>
@@ -931,97 +693,155 @@
     }
 
     // =====================
+    // LOAD DATA
+    // =====================
+    async function loadAll() {
+      const [repsRes, betsRes, histRes] = await Promise.all([
+        db.from('rr_reps').select('*').order('id'),
+        db.from('rr_bets').select('*').order('id'),
+        db.from('rr_history').select('*').order('rolled_at', {ascending:false}).limit(50)
+      ]);
+      if (repsRes.error) { console.error(repsRes.error); return; }
+      reps    = repsRes.data || [];
+      bets    = betsRes.data || [];
+      history = histRes.data || [];
+      render();
+      document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    // =====================
+    // REALTIME
+    // =====================
+    function subscribeRealtime() {
+      db.channel('rr-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rr_reps' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rr_bets' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rr_history' }, () => loadAll())
+        .subscribe(status => {
+          const dot = document.getElementById('conn-dot');
+          const label = document.getElementById('conn-label');
+          const live = status === 'SUBSCRIBED';
+          dot.className = `conn-dot${live?'':' off'}`;
+          label.textContent = live ? 'Live' : 'Reconnecting...';
+        });
+    }
+
+    // =====================
     // RENDER
     // =====================
     function render() {
       renderReps();
-      renderTokensOnTable();
+      renderTable();
       renderLeaderboard();
       renderHistory();
+      renderMyRepBar();
+    }
+
+    function getFreeTokens(repId) {
+      const rep = reps.find(r => r.id === repId);
+      if (!rep) return 0;
+      const placed = bets.filter(b => b.rep_id === repId).reduce((s,b) => s + b.tokens, 0);
+      return rep.tokens - placed;
     }
 
     function renderReps() {
       const list = document.getElementById('rep-list');
-      if (state.reps.length === 0) {
-        list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 1rem;">No reps yet. Add your team above.</div>';
+      if (!reps.length) {
+        list.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem">No reps yet.</div>';
         return;
       }
-
       list.innerHTML = '';
-      state.reps.forEach(rep => {
-        const freeTokens = getFreeTokens(rep.id);
+      reps.forEach(rep => {
+        const free = getFreeTokens(rep.id);
+        const isMe = rep.id === myRepId;
         const card = document.createElement('div');
-        card.className = `rep-card${freeTokens > 0 ? ' has-tokens' : ''}`;
+        card.className = `rep-card${free>0?' has-tokens':''}${isMe?' is-me':''}`;
         card.innerHTML = `
-          <div class="rep-avatar" style="background: ${rep.color}">${rep.name[0].toUpperCase()}</div>
+          <div class="rep-avatar" style="background:${rep.color}">${rep.name[0].toUpperCase()}</div>
           <div class="rep-info">
-            <div class="rep-name">${rep.name}</div>
-            <div class="rep-tokens"><span class="count">${freeTokens}</span> token${freeTokens !== 1 ? 's' : ''} free</div>
+            <div class="rep-name">${rep.name}${isMe?' (you)':''}</div>
+            <div class="rep-meta"><span class="count">${free}</span> token${free!==1?'s':''} free</div>
           </div>
-          <div class="rep-earnings">$${rep.earnings.toFixed(0)}</div>
+          <div class="rep-earn">$${(rep.earnings||0).toFixed(0)}</div>
           <div class="rep-actions">
-            <button class="btn btn-sm" onclick="openGiveTokenModal(${rep.id})" title="Give token for sale">+</button>
-            ${freeTokens > 0 
-              ? `<button class="btn btn-sm" style="background:#3498db;" onclick="startBet(${rep.id})" title="Place bet">Bet</button>`
-              : ''}
-            <button class="btn btn-sm btn-ghost" onclick="removeRep(${rep.id})" title="Remove rep">x</button>
+            <button class="btn btn-sm" onclick="openGiveTokenModal(${rep.id})" title="Sale! Give token">+</button>
+            <button class="btn btn-sm btn-ghost" onclick="removeRep(${rep.id})" title="Remove">x</button>
           </div>
         `;
         list.appendChild(card);
       });
     }
 
-    function getFreeTokens(repId) {
-      let placed = 0;
-      Object.values(state.bets).forEach(bets => {
-        bets.forEach(b => { if (b.repId === repId) placed += b.tokens; });
+    function renderMyRepBar() {
+      const sel = document.getElementById('my-rep-select');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">-- Select your rep --</option>';
+      reps.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name;
+        sel.appendChild(opt);
       });
-      const rep = state.reps.find(r => r.id === repId);
-      return rep ? rep.tokens - placed : 0;
+      if (cur) sel.value = cur;
+
+      const indicator = document.getElementById('my-rep-indicator');
+      if (myRepId) {
+        const rep = reps.find(r => r.id === myRepId);
+        if (rep) {
+          const free = getFreeTokens(myRepId);
+          document.getElementById('my-rep-dot').style.background = rep.color;
+          document.getElementById('my-rep-free').textContent = free > 0 ? `${free} token${free!==1?'s':''} to bet` : 'No tokens — wait for a sale';
+          document.getElementById('my-rep-badge').textContent = free > 0 ? `BET NOW` : '';
+          document.getElementById('my-rep-badge').style.display = free > 0 ? '' : 'none';
+          indicator.style.display = 'flex';
+
+          // Highlight cells when rep has tokens
+          document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('can-bet'));
+          if (free > 0) {
+            document.querySelectorAll('.num-cell').forEach(c => c.classList.add('can-bet'));
+          }
+        }
+      } else {
+        indicator.style.display = 'none';
+        document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('can-bet'));
+      }
     }
 
-    function renderTokensOnTable() {
-      // Clear all token displays
-      document.querySelectorAll('.tokens-on-cell').forEach(el => el.innerHTML = '');
-
-      // Render bets
-      Object.entries(state.bets).forEach(([num, bets]) => {
-        const container = document.getElementById(`tokens-${num}`);
+    function renderTable() {
+      document.querySelectorAll('.tokens-on-cell').forEach(el => el.innerHTML='');
+      bets.forEach(bet => {
+        const rep = reps.find(r => r.id === bet.rep_id);
+        if (!rep) return;
+        const container = document.getElementById(`tokens-${bet.number}`);
         if (!container) return;
-        bets.forEach(bet => {
-          const rep = state.reps.find(r => r.id === bet.repId);
-          if (!rep) return;
-          for (let i = 0; i < bet.tokens; i++) {
-            const token = document.createElement('div');
-            token.className = 'token';
-            token.style.background = rep.color;
-            token.title = `${rep.name} on ${num}`;
-            token.textContent = rep.name[0].toUpperCase();
-            container.appendChild(token);
-          }
-        });
+        for (let i=0; i<bet.tokens; i++) {
+          const t = document.createElement('div');
+          t.className = 'token';
+          t.style.background = rep.color;
+          t.title = `${rep.name} on ${bet.number}`;
+          t.textContent = rep.name[0].toUpperCase();
+          container.appendChild(t);
+        }
       });
     }
 
     function renderLeaderboard() {
       const lb = document.getElementById('leaderboard');
-      const sorted = [...state.reps].sort((a, b) => b.earnings - a.earnings);
-      
-      if (sorted.length === 0 || sorted.every(r => r.earnings === 0)) {
-        lb.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 0.5rem;">No earnings yet.</div>';
+      const sorted = [...reps].sort((a,b) => (b.earnings||0)-(a.earnings||0));
+      if (!sorted.length || sorted.every(r=>!r.earnings)) {
+        lb.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center">No earnings yet.</div>';
         return;
       }
-
       lb.innerHTML = '';
-      sorted.forEach((rep, i) => {
-        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      sorted.forEach((rep,i) => {
+        const rc = i===0?'gold':i===1?'silver':i===2?'bronze':'';
         const row = document.createElement('div');
         row.className = 'lb-row';
         row.innerHTML = `
-          <div class="lb-rank ${rankClass}">${i + 1}</div>
-          <div class="rep-avatar" style="background:${rep.color};width:26px;height:26px;font-size:0.75rem;">${rep.name[0].toUpperCase()}</div>
+          <div class="lb-rank ${rc}">${i+1}</div>
+          <div class="rep-avatar" style="background:${rep.color};width:24px;height:24px;font-size:0.7rem">${rep.name[0].toUpperCase()}</div>
           <div class="lb-name">${rep.name}</div>
-          <div class="lb-earn">$${rep.earnings.toFixed(0)}</div>
+          <div class="lb-earn">$${(rep.earnings||0).toFixed(0)}</div>
         `;
         lb.appendChild(row);
       });
@@ -1029,25 +849,21 @@
 
     function renderHistory() {
       const list = document.getElementById('history-list');
-      if (state.history.length === 0) {
-        list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 0.5rem;">No rolls yet.</div>';
+      if (!history.length) {
+        list.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;text-align:center">No rolls yet.</div>';
         return;
       }
-
       list.innerHTML = '';
-      [...state.history].reverse().forEach(entry => {
-        const totalPayout = entry.winners.reduce((s, w) => s + w.payout, 0);
+      history.forEach(entry => {
+        const winners = entry.winners_json || [];
+        const total = winners.reduce((s,w)=>s+w.payout,0);
         const el = document.createElement('div');
         el.className = 'history-entry';
-        const winnerText = entry.winners.length > 0
-          ? entry.winners.map(w => `${w.name} +$${w.payout}`).join(', ')
-          : 'No winners';
+        const wText = winners.length ? winners.map(w=>`${w.name} +$${w.payout}`).join(', ') : (entry.seven_out?'SEVEN OUT':'No winners');
         el.innerHTML = `
-          <div class="history-roll">${entry.roll}</div>
-          <div class="history-detail">${winnerText}</div>
-          ${totalPayout > 0 
-            ? `<div class="history-payout">$${totalPayout}</div>`
-            : `<div class="history-payout none">—</div>`}
+          <div class="history-roll" style="${entry.seven_out?'color:var(--loss)':''}">${entry.roll}</div>
+          <div class="history-detail">${wText}</div>
+          ${total>0?`<div class="history-payout">$${total}</div>`:`<div class="history-payout none">—</div>`}
         `;
         list.appendChild(el);
       });
@@ -1059,237 +875,210 @@
     function updateDie(dieEl, value) {
       dieEl.setAttribute('data-value', value);
       const dots = dieEl.querySelectorAll('.dot');
-      dots.forEach(d => {
-        d.style.gridArea = '';
-        d.className = 'dot hidden';
-      });
-
-      const positions = {
-        1: [[2,2]],
-        2: [[1,3],[3,1]],
-        3: [[1,3],[2,2],[3,1]],
-        4: [[1,1],[1,3],[3,1],[3,3]],
-        5: [[1,1],[1,3],[2,2],[3,1],[3,3]],
-        6: [[1,1],[2,1],[3,1],[1,3],[2,3],[3,3]]
-      };
-
-      positions[value].forEach((pos, i) => {
-        dots[i].className = 'dot';
-        dots[i].style.gridRow = pos[0];
-        dots[i].style.gridColumn = pos[1];
-      });
+      dots.forEach(d => { d.style.gridRow=''; d.style.gridColumn=''; d.className='dot hidden'; });
+      const pos = { 1:[[2,2]], 2:[[1,3],[3,1]], 3:[[1,3],[2,2],[3,1]], 4:[[1,1],[1,3],[3,1],[3,3]], 5:[[1,1],[1,3],[2,2],[3,1],[3,3]], 6:[[1,1],[2,1],[3,1],[1,3],[2,3],[3,3]] };
+      pos[value].forEach((p,i) => { dots[i].className='dot'; dots[i].style.gridRow=p[0]; dots[i].style.gridColumn=p[1]; });
     }
 
-    function rollDice() {
-      const btn = document.getElementById('roll-btn');
-      btn.disabled = true;
+    async function rollDice() {
+      if (rolling) return;
+      rolling = true;
+      document.getElementById('roll-btn').disabled = true;
 
-      const die1 = document.getElementById('die1');
-      const die2 = document.getElementById('die2');
-
-      // Animate
-      die1.classList.add('rolling');
-      die2.classList.add('rolling');
+      const d1 = document.getElementById('die1');
+      const d2 = document.getElementById('die2');
+      d1.classList.add('rolling'); d2.classList.add('rolling');
 
       let ticks = 0;
-      const interval = setInterval(() => {
-        updateDie(die1, Math.ceil(Math.random() * 6));
-        updateDie(die2, Math.ceil(Math.random() * 6));
-        ticks++;
-        if (ticks >= 8) {
-          clearInterval(interval);
-          const v1 = Math.ceil(Math.random() * 6);
-          const v2 = Math.ceil(Math.random() * 6);
-          updateDie(die1, v1);
-          updateDie(die2, v2);
-          die1.classList.remove('rolling');
-          die2.classList.remove('rolling');
-          processRoll(v1 + v2);
-          btn.disabled = false;
+      const iv = setInterval(() => {
+        updateDie(d1, Math.ceil(Math.random()*6));
+        updateDie(d2, Math.ceil(Math.random()*6));
+        if (++ticks >= 8) {
+          clearInterval(iv);
+          const v1 = Math.ceil(Math.random()*6);
+          const v2 = Math.ceil(Math.random()*6);
+          updateDie(d1, v1); updateDie(d2, v2);
+          d1.classList.remove('rolling'); d2.classList.remove('rolling');
+          processRoll(v1+v2).finally(() => {
+            rolling = false;
+            document.getElementById('roll-btn').disabled = false;
+          });
         }
       }, 80);
     }
 
-    function processRoll(total) {
-      const winners = [];
-      const betsOnNumber = state.bets[total] || [];
+    async function processRoll(total) {
       const sevenOut = total === 7;
+      const betsOnNumber = bets.filter(b => b.number === total);
+      const winners = [];
 
-      // Pay out bets on the rolled number
-      betsOnNumber.forEach(bet => {
-        const rep = state.reps.find(r => r.id === bet.repId);
-        if (!rep) return;
+      // Calculate payouts
+      for (const bet of betsOnNumber) {
+        const rep = reps.find(r => r.id === bet.rep_id);
+        if (!rep) continue;
         const payout = PAYOUTS[total] * bet.tokens;
-        rep.earnings += payout;
-        winners.push({ name: rep.name, number: total, payout });
-      });
-
-      if (sevenOut) {
-        // 7 clears the entire table — all remaining bets are lost
-        state.bets = {};
-      } else {
-        // Only remove bets on the winning number; all others stay
-        delete state.bets[total];
+        winners.push({ name: rep.name, repId: rep.id, payout });
       }
 
-      // History
-      state.history.push({ roll: total, winners, sevenOut });
+      // Update earnings in DB
+      for (const w of winners) {
+        const rep = reps.find(r => r.id === w.repId);
+        await db.from('rr_reps').update({ earnings: (rep.earnings||0) + w.payout }).eq('id', w.repId);
+      }
 
-      // Keep history to 50
-      if (state.history.length > 50) state.history.shift();
+      // Remove winning bets
+      if (betsOnNumber.length) {
+        await db.from('rr_bets').delete().eq('number', total);
+      }
 
-      save();
-      render();
+      // Seven out: remove ALL remaining bets
+      if (sevenOut) {
+        await db.from('rr_bets').delete().neq('id', 0);
+      }
 
-      // Show result
+      // Save history
+      await db.from('rr_history').insert({
+        roll: total,
+        seven_out: sevenOut,
+        winners_json: winners.map(w=>({ name:w.name, payout:w.payout }))
+      });
+
+      // Show result immediately (realtime will update state)
       const resultEl = document.getElementById('roll-result');
       if (sevenOut) {
         resultEl.innerHTML = `
-          <div class="total" style="color: var(--loss)">7</div>
-          <div class="winners-list" style="color: var(--loss)">
-            SEVEN OUT — table cleared
-            ${winners.length > 0 ? '<br>' + winners.map(w => `<span class="winner-name">${w.name}</span> wins <strong style="color:var(--win)">$${w.payout}</strong>`).join(' &bull; ') : ''}
-          </div>
-        `;
-      } else if (winners.length > 0) {
-        const flash = document.getElementById('win-flash');
-        flash.classList.add('show');
-        setTimeout(() => flash.classList.remove('show'), 600);
-
+          <div class="total" style="color:var(--loss)">7</div>
+          <div class="sub" style="color:var(--loss)">SEVEN OUT — all bets cleared${winners.length?' &bull; '+winners.map(w=>`<span class="winner-name">${w.name}</span> +$${w.payout}`).join(' &bull; '):''}
+          </div>`;
+      } else if (winners.length) {
+        document.getElementById('win-flash').classList.add('show');
+        setTimeout(()=>document.getElementById('win-flash').classList.remove('show'),600);
         resultEl.innerHTML = `
-          <div class="total" style="color: var(--win)">${total}</div>
-          <div class="winners-list">
-            ${winners.map(w => `<span class="winner-name">${w.name}</span> wins <strong style="color:var(--win)">$${w.payout}</strong>`).join(' &bull; ')}
-          </div>
-        `;
+          <div class="total" style="color:var(--win)">${total}</div>
+          <div class="sub">${winners.map(w=>`<span class="winner-name">${w.name}</span> wins <strong style="color:var(--win)">$${w.payout}</strong>`).join(' &bull; ')}</div>`;
       } else {
         resultEl.innerHTML = `
           <div class="total">${total}</div>
-          <div class="winners-list">No winners — bets stay on the table</div>
-        `;
+          <div class="sub">No winners — bets stay on the table</div>`;
       }
     }
 
     // =====================
-    // BET PLACEMENT
+    // BETTING
     // =====================
-    function startBet(repId) {
-      const rep = state.reps.find(r => r.id === repId);
-      const free = getFreeTokens(repId);
-      if (!rep || free === 0) return;
-
-      betMode = { repId, tokens: 1 };
-      document.getElementById('bet-banner-text').textContent =
-        `${rep.name}: click a number to bet 1 token (${free} free)`;
-      document.getElementById('bet-banner').classList.add('active');
-    }
-
-    function cancelBet() {
-      betMode = null;
-      document.getElementById('bet-banner').classList.remove('active');
-    }
-
     function handleCellClick(num) {
-      if (!betMode) return;
-      const { repId, tokens } = betMode;
-
-      if (!state.bets[num]) state.bets[num] = [];
-
-      // Check if rep already has a bet on this number
-      const existing = state.bets[num].find(b => b.repId === repId);
-      if (existing) {
-        existing.tokens += tokens;
-      } else {
-        state.bets[num].push({ repId, tokens });
+      // If myRepId set and they have tokens, go direct
+      if (myRepId) {
+        const free = getFreeTokens(myRepId);
+        if (free > 0) {
+          placeBet(myRepId, num);
+          return;
+        }
       }
+      // Otherwise show picker
+      openBetModal(num);
+    }
 
-      cancelBet();
-      save();
-      render();
+    function openBetModal(num) {
+      const eligible = reps.filter(r => getFreeTokens(r.id) > 0);
+      if (!eligible.length) { alert('No reps have free tokens to bet with.'); return; }
+      betTargetNum = num;
+      document.getElementById('bet-modal-num').textContent = num;
+      document.getElementById('bet-modal-payout').textContent = `$${PAYOUTS[num]}`;
+      const list = document.getElementById('rep-pick-list');
+      list.innerHTML = '';
+      eligible.forEach(rep => {
+        const free = getFreeTokens(rep.id);
+        const item = document.createElement('div');
+        item.className = 'rep-pick-item';
+        item.innerHTML = `
+          <div class="rep-avatar" style="background:${rep.color}">${rep.name[0].toUpperCase()}</div>
+          <span style="font-weight:700">${rep.name}</span>
+          <span class="pick-free">${free} token${free!==1?'s':''}</span>
+        `;
+        item.onclick = () => { closeModal('bet-modal'); placeBet(rep.id, num); };
+        list.appendChild(item);
+      });
+      document.getElementById('bet-modal').classList.add('active');
+    }
+
+    async function placeBet(repId, num) {
+      const existing = bets.find(b => b.rep_id === repId && b.number === num);
+      if (existing) {
+        await db.from('rr_bets').update({ tokens: existing.tokens + 1 }).eq('id', existing.id);
+      } else {
+        await db.from('rr_bets').insert({ rep_id: repId, number: num, tokens: 1 });
+      }
     }
 
     // =====================
     // REP MANAGEMENT
     // =====================
+    function onMyRepChange() {
+      const val = document.getElementById('my-rep-select').value;
+      myRepId = val ? parseInt(val) : null;
+      renderMyRepBar();
+    }
+
     function openAddRepModal() {
       document.getElementById('new-rep-name').value = '';
       document.getElementById('add-rep-modal').classList.add('active');
       setTimeout(() => document.getElementById('new-rep-name').focus(), 100);
     }
 
-    function addRep() {
+    async function addRep() {
       const name = document.getElementById('new-rep-name').value.trim();
       if (!name) return;
-
-      const color = REP_COLORS[state.reps.length % REP_COLORS.length];
-      state.reps.push({
-        id: state.nextRepId++,
-        name,
-        tokens: 0,
-        earnings: 0,
-        color
-      });
-
+      const color = REP_COLORS[reps.length % REP_COLORS.length];
+      await db.from('rr_reps').insert({ name, color, tokens: 0, earnings: 0 });
       closeModal('add-rep-modal');
-      save();
-      render();
     }
 
-    function removeRep(repId) {
-      state.reps = state.reps.filter(r => r.id !== repId);
-      // Remove their bets
-      Object.keys(state.bets).forEach(num => {
-        state.bets[num] = state.bets[num].filter(b => b.repId !== repId);
-        if (state.bets[num].length === 0) delete state.bets[num];
-      });
-      save();
-      render();
+    async function removeRep(repId) {
+      await db.from('rr_bets').delete().eq('rep_id', repId);
+      await db.from('rr_reps').delete().eq('id', repId);
+      if (myRepId === repId) myRepId = null;
     }
 
     function openGiveTokenModal(repId) {
       giveTokenRepId = repId;
-      const rep = state.reps.find(r => r.id === repId);
-      document.getElementById('give-token-rep-label').innerHTML = `Awarding token to <strong>${rep.name}</strong>`;
+      const rep = reps.find(r => r.id === repId);
+      document.getElementById('give-token-label').innerHTML = `Awarding to <strong>${rep.name}</strong>`;
       document.getElementById('token-reason').value = '';
       document.getElementById('give-token-modal').classList.add('active');
     }
 
-    function confirmGiveToken() {
-      const rep = state.reps.find(r => r.id === giveTokenRepId);
+    async function confirmGiveToken() {
+      const rep = reps.find(r => r.id === giveTokenRepId);
       if (!rep) return;
-      rep.tokens++;
+      await db.from('rr_reps').update({ tokens: rep.tokens + 1 }).eq('id', giveTokenRepId);
       closeModal('give-token-modal');
-      save();
-      render();
+    }
+
+    async function resetAll() {
+      if (!confirm('Reset all earnings and tokens? Rep names stay.')) return;
+      await db.from('rr_bets').delete().neq('id', 0);
+      await db.from('rr_history').delete().neq('id', 0);
+      for (const rep of reps) {
+        await db.from('rr_reps').update({ tokens: 0, earnings: 0 }).eq('id', rep.id);
+      }
+      document.getElementById('roll-result').innerHTML = '';
     }
 
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
     }
 
-    function resetAll() {
-      if (!confirm('Reset all earnings and tokens? Reps stay, everything else clears.')) return;
-      state.reps.forEach(r => { r.tokens = 0; r.earnings = 0; });
-      state.bets = {};
-      state.history = [];
-      save();
-      render();
-      document.getElementById('roll-result').innerHTML = '';
-    }
-
-    // Close modals on overlay click
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.onclick = (e) => {
-        if (e.target === overlay) overlay.classList.remove('active');
-      };
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.onclick = e => { if (e.target === o) o.classList.remove('active'); };
     });
 
     // =====================
     // BOOT
     // =====================
-    load();
     initTable();
-    render();
+    loadAll();
+    subscribeRealtime();
   </script>
 </body>
 </html>
