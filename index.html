@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rep Roll — Sales Craps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f14;
+      --surface: #1a1a24;
+      --surface-2: #22222e;
+      --felt: #1e4d2b;
+      --felt-border: #2d6b3c;
+      --felt-line: #3a8050;
+      --gold: #c9a227;
+      --gold-dark: #9a7c1a;
+      --red: #c0392b;
+      --text: #f0ede8;
+      --text-dim: #8a8a9a;
+      --win: #27ae60;
+      --loss: #c0392b;
+      --number-bg: #111118;
+      --token-size: 36px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      background: var(--surface);
+      border-bottom: 3px solid var(--gold);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      line-height: 1;
+    }
+
+    .logo span {
+      color: var(--text-dim);
+      font-size: 1rem;
+      display: block;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .payout-legend {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .payout-pill {
+      background: var(--surface-2);
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .payout-pill .num {
+      color: var(--text-dim);
+    }
+
+    .payout-pill .pay {
+      color: var(--gold);
+    }
+
+    /* ---- LAYOUT ---- */
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ---- PANELS ---- */
+    .panel {
+      background: var(--surface);
+      border: 1px solid #2a2a38;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      background: var(--surface-2);
+      padding: 0.8rem 1.2rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      border-bottom: 1px solid #2a2a38;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-body {
+      padding: 1.2rem;
+    }
+
+    /* ---- TEAM PANEL ---- */
+    .add-rep {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .add-rep input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 0.5rem 0.7rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+    }
+
+    .add-rep input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .btn {
+      background: var(--gold);
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 0.9rem;
+      color: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: #e0b52e; }
+
+    .btn-sm {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      border-radius: 3px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #444;
+      color: var(--text-dim);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .btn-red {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-red:hover { background: #e74c3c; }
+
+    .rep-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .rep-card {
+      background: var(--surface-2);
+      border: 1px solid #2a2a38;
+      border-radius: 6px;
+      padding: 0.7rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: border-color 0.2s;
+    }
+
+    .rep-card.has-tokens {
+      border-color: var(--gold);
+    }
+
+    .rep-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .rep-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rep-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rep-tokens {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .rep-tokens .count {
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .rep-earnings {
+      font-size: 0.8rem;
+      color: var(--win);
+      font-weight: 700;
+    }
+
+    .rep-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* ---- CRAPS TABLE ---- */
+    .table-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .craps-table {
+      background: var(--felt);
+      border: 4px solid var(--felt-border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.3), 0 0 0 2px var(--felt-line);
+      user-select: none;
+    }
+
+    .table-section-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Number cells */
+    .number-row {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .number-row.main {
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    .number-row.outer {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .number-row.seven-row {
+      grid-template-columns: 1fr;
+      margin-bottom: 6px;
+    }
+
+    .num-cell {
+      background: var(--number-bg);
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 0.6rem 0.4rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 4px;
+    }
+
+    .num-cell:hover {
+      border-color: var(--gold);
+      background: #1a1a22;
+    }
+
+    .num-cell.hot {
+      border-color: var(--felt-line);
+    }
+
+    .num-cell.seven {
+      min-height: 60px;
+      background: #1a0a0a;
+      border-color: #5a1a1a;
+    }
+
+    .num-cell.seven:hover {
+      border-color: var(--red);
+    }
+
+    .num-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .num-cell.seven .num-label {
+      color: #e74c3c;
+    }
+
+    .num-payout {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    .num-prob {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+    }
+
+    .tokens-on-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .token {
+      width: var(--token-size);
+      height: var(--token-size);
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: #000;
+      text-transform: uppercase;
+      cursor: default;
+    }
+
+    /* ---- DICE ---- */
+    .dice-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.2rem;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid #2a2a38;
+    }
+
+    .dice-wrap {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .die {
+      width: 72px;
+      height: 72px;
+      background: var(--text);
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 8px;
+      gap: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: transform 0.1s;
+    }
+
+    .die.rolling {
+      animation: diceRoll 0.6s ease-out;
+    }
+
+    @keyframes diceRoll {
+      0% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(90deg) scale(1.1); }
+      40% { transform: rotate(180deg) scale(0.9); }
+      60% { transform: rotate(270deg) scale(1.1); }
+      80% { transform: rotate(320deg) scale(0.95); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .dot {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1a1a1a;
+    }
+
+    .dot.hidden { background: transparent; }
+
+    /* Die dot patterns */
+    .die[data-value="1"] .dot:nth-child(1) { grid-area: 2/2; }
+    .die[data-value="2"] .dot:nth-child(1) { grid-area: 1/3; }
+    .die[data-value="2"] .dot:nth-child(2) { grid-area: 3/1; }
+    .die[data-value="3"] .dot:nth-child(1) { grid-area: 1/3; }
+    .die[data-value="3"] .dot:nth-child(2) { grid-area: 2/2; }
+    .die[data-value="3"] .dot:nth-child(3) { grid-area: 3/1; }
+    .die[data-value="4"] .dot:nth-child(1) { grid-area: 1/1; }
+    .die[data-value="4"] .dot:nth-child(2) { grid-area: 1/3; }
+    .die[data-value="4"] .dot:nth-child(3) { grid-area: 3/1; }
+    .die[data-value="4"] .dot:nth-child(4) { grid-area: 3/3; }
+    .die[data-value="5"] .dot:nth-child(1) { grid-area: 1/1; }
+    .die[data-value="5"] .dot:nth-child(2) { grid-area: 1/3; }
+    .die[data-value="5"] .dot:nth-child(3) { grid-area: 2/2; }
+    .die[data-value="5"] .dot:nth-child(4) { grid-area: 3/1; }
+    .die[data-value="5"] .dot:nth-child(5) { grid-area: 3/3; }
+    .die[data-value="6"] .dot:nth-child(1) { grid-area: 1/1; }
+    .die[data-value="6"] .dot:nth-child(2) { grid-area: 2/1; }
+    .die[data-value="6"] .dot:nth-child(3) { grid-area: 3/1; }
+    .die[data-value="6"] .dot:nth-child(4) { grid-area: 1/3; }
+    .die[data-value="6"] .dot:nth-child(5) { grid-area: 2/3; }
+    .die[data-value="6"] .dot:nth-child(6) { grid-area: 3/3; }
+
+    .roll-btn {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      padding: 0.7rem 2.5rem;
+      color: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .roll-btn:hover:not(:disabled) {
+      background: #e0b52e;
+      transform: translateY(-2px);
+    }
+
+    .roll-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .roll-result {
+      text-align: center;
+      font-family: 'Bebas Neue', sans-serif;
+    }
+
+    .roll-result .total {
+      font-size: 3rem;
+      line-height: 1;
+      color: var(--gold);
+    }
+
+    .roll-result .winners-list {
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-dim);
+      margin-top: 0.3rem;
+    }
+
+    .roll-result .winner-name {
+      color: var(--win);
+      font-weight: 700;
+    }
+
+    /* ---- LEADERBOARD / HISTORY ---- */
+    .leaderboard {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 0.8rem;
+      background: var(--surface-2);
+      border-radius: 6px;
+      border: 1px solid #2a2a38;
+    }
+
+    .lb-rank {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      width: 24px;
+      text-align: center;
+    }
+
+    .lb-rank.gold { color: #f4c542; }
+    .lb-rank.silver { color: #c0c0c0; }
+    .lb-rank.bronze { color: #cd7f32; }
+
+    .lb-name {
+      flex: 1;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .lb-earn {
+      font-weight: 700;
+      color: var(--win);
+      font-size: 0.9rem;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .history-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.4rem 0.7rem;
+      background: var(--surface-2);
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .history-roll {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      width: 24px;
+      text-align: center;
+    }
+
+    .history-detail {
+      flex: 1;
+      color: var(--text-dim);
+    }
+
+    .history-payout {
+      color: var(--win);
+      font-weight: 700;
+    }
+
+    .history-payout.none {
+      color: var(--text-dim);
+    }
+
+    /* ---- MODAL ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      padding: 1.8rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+
+    .modal h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-rep-name {
+      font-size: 1rem;
+      color: var(--text-dim);
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-rep-name strong { color: var(--text); }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1.4rem;
+    }
+
+    .modal-actions .btn { flex: 1; padding: 0.7rem; }
+
+    /* ---- BET PLACEMENT ---- */
+    .bet-mode-banner {
+      display: none;
+      background: var(--gold);
+      color: var(--bg);
+      padding: 0.7rem 1.2rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .bet-mode-banner.active { display: flex; }
+
+    /* ---- WIN FLASH ---- */
+    .win-flash {
+      position: fixed;
+      inset: 0;
+      background: rgba(39, 174, 96, 0.15);
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .win-flash.show { opacity: 1; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 1fr 1fr;
+      }
+      .table-wrap { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 700px) {
+      .app { grid-template-columns: 1fr; padding: 1rem; }
+      .payout-legend { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="win-flash" id="win-flash"></div>
+
+  <header>
+    <div class="logo">
+      REP ROLL
+      <span>Sales Incentive Craps</span>
+    </div>
+    <div class="payout-legend">
+      <div class="payout-pill"><span class="num">7</span><span class="pay">$3</span></div>
+      <div class="payout-pill"><span class="num">6 / 8</span><span class="pay">$5</span></div>
+      <div class="payout-pill"><span class="num">5 / 9</span><span class="pay">$10</span></div>
+      <div class="payout-pill"><span class="num">4 / 10</span><span class="pay">$15</span></div>
+      <div class="payout-pill"><span class="num">3 / 11</span><span class="pay">$25</span></div>
+      <div class="payout-pill"><span class="num">2 / 12</span><span class="pay">$75</span></div>
+    </div>
+  </header>
+
+  <div class="app">
+
+    <!-- LEFT: TEAM -->
+    <div>
+      <div class="panel">
+        <div class="panel-head">
+          Team
+          <button class="btn btn-sm" onclick="openAddRepModal()">+ Add Rep</button>
+        </div>
+        <div class="panel-body">
+          <div class="rep-list" id="rep-list">
+            <div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 1rem;">
+              No reps yet. Add your team above.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: TABLE + DICE -->
+    <div class="table-wrap">
+
+      <div class="bet-mode-banner" id="bet-banner">
+        <span id="bet-banner-text">Select a number to place your bet</span>
+        <button class="btn btn-sm btn-ghost" onclick="cancelBet()">Cancel</button>
+      </div>
+
+      <div class="craps-table">
+        <div class="table-section-label">PLACE YOUR BETS</div>
+
+        <!-- Outer numbers: 2, 3, 11, 12 -->
+        <div class="number-row outer" id="outer-row"></div>
+
+        <!-- Main numbers: 4, 5, 6, 8, 9, 10 -->
+        <div class="number-row main" id="main-row"></div>
+
+        <!-- 7 -->
+        <div class="number-row seven-row" id="seven-row"></div>
+      </div>
+
+      <!-- DICE -->
+      <div class="dice-area">
+        <div class="dice-wrap">
+          <div class="die" id="die1" data-value="1">
+            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
+            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
+          </div>
+          <div class="die" id="die2" data-value="1">
+            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
+            <div class="dot hidden"></div><div class="dot hidden"></div><div class="dot hidden"></div>
+          </div>
+        </div>
+        <button class="roll-btn" id="roll-btn" onclick="rollDice()">ROLL THE DICE</button>
+        <div class="roll-result" id="roll-result"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LEADERBOARD + HISTORY -->
+    <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+      <div class="panel">
+        <div class="panel-head">
+          Leaderboard
+          <button class="btn btn-sm btn-ghost btn-red" onclick="resetAll()" style="font-size:0.7rem;">Reset</button>
+        </div>
+        <div class="panel-body">
+          <div class="leaderboard" id="leaderboard">
+            <div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 0.5rem;">
+              No earnings yet.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Roll History</div>
+        <div class="panel-body" style="padding: 0.8rem;">
+          <div class="history-list" id="history-list">
+            <div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 0.5rem;">
+              No rolls yet.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD REP MODAL -->
+  <div class="modal-overlay" id="add-rep-modal">
+    <div class="modal">
+      <h3>Add Rep</h3>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="new-rep-name" placeholder="Jane Smith" maxlength="20" onkeydown="if(event.key==='Enter')addRep()">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('add-rep-modal')">Cancel</button>
+        <button class="btn" onclick="addRep()">Add Rep</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIVE TOKEN MODAL -->
+  <div class="modal-overlay" id="give-token-modal">
+    <div class="modal">
+      <h3>Award Token</h3>
+      <div class="modal-rep-name" id="give-token-rep-label">Rep: <strong></strong></div>
+      <div class="form-group">
+        <label>Reason (optional)</label>
+        <input type="text" id="token-reason" placeholder="Closed Q4 deal" maxlength="40">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('give-token-modal')">Cancel</button>
+        <button class="btn" onclick="confirmGiveToken()">Give Token</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================
+    // GAME CONFIG
+    // =====================
+    const PAYOUTS = {
+      2: 75, 3: 25, 4: 15, 5: 10,
+      6: 5, 7: 3, 8: 5, 9: 10,
+      10: 15, 11: 25, 12: 75
+    };
+
+    const PROBS = {
+      2: '2.8%', 3: '5.6%', 4: '8.3%', 5: '11.1%',
+      6: '13.9%', 7: '16.7%', 8: '13.9%', 9: '11.1%',
+      10: '8.3%', 11: '5.6%', 12: '2.8%'
+    };
+
+    const REP_COLORS = [
+      '#e74c3c','#3498db','#9b59b6','#e67e22',
+      '#1abc9c','#e91e63','#00bcd4','#ff9800',
+      '#8bc34a','#f06292','#26c6da','#ffb300'
+    ];
+
+    // =====================
+    // STATE
+    // =====================
+    let state = {
+      reps: [],       // { id, name, tokens, earnings, color }
+      bets: {},       // { number: [{ repId, tokens }] }
+      history: [],    // { roll, winners: [{ name, number, payout }] }
+      nextRepId: 1
+    };
+
+    let betMode = null; // { repId, tokens }
+    let giveTokenRepId = null;
+
+    // =====================
+    // PERSISTENCE
+    // =====================
+    function save() {
+      localStorage.setItem('rep-roll', JSON.stringify(state));
+    }
+
+    function load() {
+      const saved = localStorage.getItem('rep-roll');
+      if (saved) {
+        try { state = JSON.parse(saved); } catch(e) {}
+      }
+    }
+
+    // =====================
+    // INIT TABLE
+    // =====================
+    function initTable() {
+      const outerRow = document.getElementById('outer-row');
+      const mainRow = document.getElementById('main-row');
+      const sevenRow = document.getElementById('seven-row');
+
+      // Outer: 2, 3, 11, 12
+      [2, 3, 11, 12].forEach(n => {
+        outerRow.appendChild(makeCell(n));
+      });
+
+      // Main: 4, 5, 6, 8, 9, 10
+      [4, 5, 6, 8, 9, 10].forEach(n => {
+        mainRow.appendChild(makeCell(n));
+      });
+
+      // Seven
+      sevenRow.appendChild(makeCell(7, true));
+    }
+
+    function makeCell(n, isSeven = false) {
+      const cell = document.createElement('div');
+      cell.className = `num-cell${isSeven ? ' seven' : ''}`;
+      cell.id = `cell-${n}`;
+      cell.innerHTML = `
+        <div class="num-label">${n}</div>
+        <div class="num-payout">$${PAYOUTS[n]}</div>
+        <div class="num-prob">${PROBS[n]}</div>
+        <div class="tokens-on-cell" id="tokens-${n}"></div>
+      `;
+      cell.onclick = () => handleCellClick(n);
+      return cell;
+    }
+
+    // =====================
+    // RENDER
+    // =====================
+    function render() {
+      renderReps();
+      renderTokensOnTable();
+      renderLeaderboard();
+      renderHistory();
+    }
+
+    function renderReps() {
+      const list = document.getElementById('rep-list');
+      if (state.reps.length === 0) {
+        list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 1rem;">No reps yet. Add your team above.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      state.reps.forEach(rep => {
+        const freeTokens = getFreeTokens(rep.id);
+        const card = document.createElement('div');
+        card.className = `rep-card${freeTokens > 0 ? ' has-tokens' : ''}`;
+        card.innerHTML = `
+          <div class="rep-avatar" style="background: ${rep.color}">${rep.name[0].toUpperCase()}</div>
+          <div class="rep-info">
+            <div class="rep-name">${rep.name}</div>
+            <div class="rep-tokens"><span class="count">${freeTokens}</span> token${freeTokens !== 1 ? 's' : ''} free</div>
+          </div>
+          <div class="rep-earnings">$${rep.earnings.toFixed(0)}</div>
+          <div class="rep-actions">
+            <button class="btn btn-sm" onclick="openGiveTokenModal(${rep.id})" title="Give token for sale">+</button>
+            ${freeTokens > 0 
+              ? `<button class="btn btn-sm" style="background:#3498db;" onclick="startBet(${rep.id})" title="Place bet">Bet</button>`
+              : ''}
+            <button class="btn btn-sm btn-ghost" onclick="removeRep(${rep.id})" title="Remove rep">x</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function getFreeTokens(repId) {
+      let placed = 0;
+      Object.values(state.bets).forEach(bets => {
+        bets.forEach(b => { if (b.repId === repId) placed += b.tokens; });
+      });
+      const rep = state.reps.find(r => r.id === repId);
+      return rep ? rep.tokens - placed : 0;
+    }
+
+    function renderTokensOnTable() {
+      // Clear all token displays
+      document.querySelectorAll('.tokens-on-cell').forEach(el => el.innerHTML = '');
+
+      // Render bets
+      Object.entries(state.bets).forEach(([num, bets]) => {
+        const container = document.getElementById(`tokens-${num}`);
+        if (!container) return;
+        bets.forEach(bet => {
+          const rep = state.reps.find(r => r.id === bet.repId);
+          if (!rep) return;
+          for (let i = 0; i < bet.tokens; i++) {
+            const token = document.createElement('div');
+            token.className = 'token';
+            token.style.background = rep.color;
+            token.title = `${rep.name} on ${num}`;
+            token.textContent = rep.name[0].toUpperCase();
+            container.appendChild(token);
+          }
+        });
+      });
+    }
+
+    function renderLeaderboard() {
+      const lb = document.getElementById('leaderboard');
+      const sorted = [...state.reps].sort((a, b) => b.earnings - a.earnings);
+      
+      if (sorted.length === 0 || sorted.every(r => r.earnings === 0)) {
+        lb.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 0.5rem;">No earnings yet.</div>';
+        return;
+      }
+
+      lb.innerHTML = '';
+      sorted.forEach((rep, i) => {
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const row = document.createElement('div');
+        row.className = 'lb-row';
+        row.innerHTML = `
+          <div class="lb-rank ${rankClass}">${i + 1}</div>
+          <div class="rep-avatar" style="background:${rep.color};width:26px;height:26px;font-size:0.75rem;">${rep.name[0].toUpperCase()}</div>
+          <div class="lb-name">${rep.name}</div>
+          <div class="lb-earn">$${rep.earnings.toFixed(0)}</div>
+        `;
+        lb.appendChild(row);
+      });
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      if (state.history.length === 0) {
+        list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 0.5rem;">No rolls yet.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      [...state.history].reverse().forEach(entry => {
+        const totalPayout = entry.winners.reduce((s, w) => s + w.payout, 0);
+        const el = document.createElement('div');
+        el.className = 'history-entry';
+        const winnerText = entry.winners.length > 0
+          ? entry.winners.map(w => `${w.name} +$${w.payout}`).join(', ')
+          : 'No winners';
+        el.innerHTML = `
+          <div class="history-roll">${entry.roll}</div>
+          <div class="history-detail">${winnerText}</div>
+          ${totalPayout > 0 
+            ? `<div class="history-payout">$${totalPayout}</div>`
+            : `<div class="history-payout none">—</div>`}
+        `;
+        list.appendChild(el);
+      });
+    }
+
+    // =====================
+    // DICE
+    // =====================
+    function updateDie(dieEl, value) {
+      dieEl.setAttribute('data-value', value);
+      const dots = dieEl.querySelectorAll('.dot');
+      dots.forEach(d => {
+        d.style.gridArea = '';
+        d.className = 'dot hidden';
+      });
+
+      const positions = {
+        1: [[2,2]],
+        2: [[1,3],[3,1]],
+        3: [[1,3],[2,2],[3,1]],
+        4: [[1,1],[1,3],[3,1],[3,3]],
+        5: [[1,1],[1,3],[2,2],[3,1],[3,3]],
+        6: [[1,1],[2,1],[3,1],[1,3],[2,3],[3,3]]
+      };
+
+      positions[value].forEach((pos, i) => {
+        dots[i].className = 'dot';
+        dots[i].style.gridRow = pos[0];
+        dots[i].style.gridColumn = pos[1];
+      });
+    }
+
+    function rollDice() {
+      const btn = document.getElementById('roll-btn');
+      btn.disabled = true;
+
+      const die1 = document.getElementById('die1');
+      const die2 = document.getElementById('die2');
+
+      // Animate
+      die1.classList.add('rolling');
+      die2.classList.add('rolling');
+
+      let ticks = 0;
+      const interval = setInterval(() => {
+        updateDie(die1, Math.ceil(Math.random() * 6));
+        updateDie(die2, Math.ceil(Math.random() * 6));
+        ticks++;
+        if (ticks >= 8) {
+          clearInterval(interval);
+          const v1 = Math.ceil(Math.random() * 6);
+          const v2 = Math.ceil(Math.random() * 6);
+          updateDie(die1, v1);
+          updateDie(die2, v2);
+          die1.classList.remove('rolling');
+          die2.classList.remove('rolling');
+          processRoll(v1 + v2);
+          btn.disabled = false;
+        }
+      }, 80);
+    }
+
+    function processRoll(total) {
+      const winners = [];
+      const betsOnNumber = state.bets[total] || [];
+
+      betsOnNumber.forEach(bet => {
+        const rep = state.reps.find(r => r.id === bet.repId);
+        if (!rep) return;
+        const payout = PAYOUTS[total] * bet.tokens;
+        rep.earnings += payout;
+        winners.push({ name: rep.name, number: total, payout });
+      });
+
+      // Clear all bets after roll
+      state.bets = {};
+
+      // History
+      state.history.push({ roll: total, winners });
+
+      // Keep history to 50
+      if (state.history.length > 50) state.history.shift();
+
+      save();
+      render();
+
+      // Show result
+      const resultEl = document.getElementById('roll-result');
+      if (winners.length > 0) {
+        const flash = document.getElementById('win-flash');
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 600);
+
+        resultEl.innerHTML = `
+          <div class="total" style="color: var(--win)">${total}</div>
+          <div class="winners-list">
+            ${winners.map(w => `<span class="winner-name">${w.name}</span> wins <strong style="color:var(--win)">$${w.payout}</strong>`).join(' &bull; ')}
+          </div>
+        `;
+      } else {
+        resultEl.innerHTML = `
+          <div class="total">${total}</div>
+          <div class="winners-list">No winners this roll</div>
+        `;
+      }
+    }
+
+    // =====================
+    // BET PLACEMENT
+    // =====================
+    function startBet(repId) {
+      const rep = state.reps.find(r => r.id === repId);
+      const free = getFreeTokens(repId);
+      if (!rep || free === 0) return;
+
+      betMode = { repId, tokens: 1 };
+      document.getElementById('bet-banner-text').textContent =
+        `${rep.name}: click a number to bet 1 token (${free} free)`;
+      document.getElementById('bet-banner').classList.add('active');
+    }
+
+    function cancelBet() {
+      betMode = null;
+      document.getElementById('bet-banner').classList.remove('active');
+    }
+
+    function handleCellClick(num) {
+      if (!betMode) return;
+      const { repId, tokens } = betMode;
+
+      if (!state.bets[num]) state.bets[num] = [];
+
+      // Check if rep already has a bet on this number
+      const existing = state.bets[num].find(b => b.repId === repId);
+      if (existing) {
+        existing.tokens += tokens;
+      } else {
+        state.bets[num].push({ repId, tokens });
+      }
+
+      cancelBet();
+      save();
+      render();
+    }
+
+    // =====================
+    // REP MANAGEMENT
+    // =====================
+    function openAddRepModal() {
+      document.getElementById('new-rep-name').value = '';
+      document.getElementById('add-rep-modal').classList.add('active');
+      setTimeout(() => document.getElementById('new-rep-name').focus(), 100);
+    }
+
+    function addRep() {
+      const name = document.getElementById('new-rep-name').value.trim();
+      if (!name) return;
+
+      const color = REP_COLORS[state.reps.length % REP_COLORS.length];
+      state.reps.push({
+        id: state.nextRepId++,
+        name,
+        tokens: 0,
+        earnings: 0,
+        color
+      });
+
+      closeModal('add-rep-modal');
+      save();
+      render();
+    }
+
+    function removeRep(repId) {
+      state.reps = state.reps.filter(r => r.id !== repId);
+      // Remove their bets
+      Object.keys(state.bets).forEach(num => {
+        state.bets[num] = state.bets[num].filter(b => b.repId !== repId);
+        if (state.bets[num].length === 0) delete state.bets[num];
+      });
+      save();
+      render();
+    }
+
+    function openGiveTokenModal(repId) {
+      giveTokenRepId = repId;
+      const rep = state.reps.find(r => r.id === repId);
+      document.getElementById('give-token-rep-label').innerHTML = `Awarding token to <strong>${rep.name}</strong>`;
+      document.getElementById('token-reason').value = '';
+      document.getElementById('give-token-modal').classList.add('active');
+    }
+
+    function confirmGiveToken() {
+      const rep = state.reps.find(r => r.id === giveTokenRepId);
+      if (!rep) return;
+      rep.tokens++;
+      closeModal('give-token-modal');
+      save();
+      render();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function resetAll() {
+      if (!confirm('Reset all earnings and tokens? Reps stay, everything else clears.')) return;
+      state.reps.forEach(r => { r.tokens = 0; r.earnings = 0; });
+      state.bets = {};
+      state.history = [];
+      save();
+      render();
+      document.getElementById('roll-result').innerHTML = '';
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      };
+    });
+
+    // =====================
+    // BOOT
+    // =====================
+    load();
+    initTable();
+    render();
+  </script>
+</body>
+</html>
